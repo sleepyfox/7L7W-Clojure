@@ -127,4 +127,36 @@ The second part just needs to include the second clause of the if statement like
 
 This seems to work nicely. There's probably an obvious pitfall that I'm not seeing here - probably because I didn't fall into it...
 
+It would be nice if we could specify the else-clause as optional. It turns out that there's a simple pattern matching way of specifying the arity of a function (or a macro) in Clojure like so:
+
+	(defn num-args
+		([] (println "no args"))
+		([a] (println "one arg"))
+		([a b] (println "two args")))
+
+We can use this to combine our previous two forms of the _unless_ macro:
+
+	(defmacro unless 
+	  ([test true-clause]
+	    (list 'if (list 'not test) true-clause))
+	  ([test true-clause else-clause]
+	    (list 'if (list 'not test) true-clause else-clause)))
+
 ### Write a type using defrecord that implements a protocol
+
+For this exercise we'll implement an Animal protocol, with make-noise and run-speed methods. We'll then implement a Cat record that adheres to the Animal protocol, and test it by instantiating a Cat 'object' and seeing how it responds.
+
+	(defprotocol Animal
+	  (make-noise [x]))
+
+	(defrecord Cat [name]
+	  Animal
+	  (make-noise [_] (str name " goes meow")))
+
+	(deftest a-Cat-record
+	  (testing "A cat should go meow"
+	    (def my-cat(Cat. "Sherbet"))
+	    (is (= (make-noise my-cat) "Sherbet goes meow" ))
+	))
+
+There's still some things I have to get my head around with namespaces and how they interact with leiningen, but that's just a matter of practice practice practice...

@@ -29,7 +29,7 @@ otherwise the somewhat cryptic (for non-Java programmers):
 
 	$ java -cp clojure.jar clojure.main /path/to/my-app.clj
 
-but the latter means that clojure.jar needs to be on your class path (oh, more Java joy!)
+but the latter means that clojure.jar needs to be on your class path (oh, more Java joy!).
 
 ## Data types
 There are many and various data types in Clojure, more so than in many other languages
