@@ -24,14 +24,14 @@ This seems to be a lot less hassle than:
 
 ## Using loop and recur to emulate tail-call optimisation
 
-
+This seems to me to be a significant deficit in any functional language.
 
 ## Sequences and he standard library
 We talk through the usual map, filter and reduce - nothing new here. The range, iterate, take and drop are familiar from Haskell, though I haven't seen cycle, interpose and interleave before, I'm sure that's just a lack of familiarity with Prelude however.
 
 The concept of lazy evaluation of infinite sequences seems to be an elegant and powerful one, and one that I haven't had much experience with due to them not being a part of the core language of JS, Python, Java, Ruby etc. 
 
-RPN still trips me up sometimes
+RPN still trips me up sometimes!
 
 I had a problem with:
 
@@ -46,7 +46,7 @@ as the argument list is in square brackets, but what I want is a single argument
 ## Records and Protocols
 Accessing a hash value by using (:bearing c) was something that doesn't come as naturally as c.bearing or c["bearing"]
 
-What is the reason to have a trailing period after the record name in the following?
+What is the reason to have a trailing period after the record name in the following? It turns out that this is the shorthand for 'invoke the constructor' - something which the book doesn't mention (and neither did any of the Clojure doco that I found).
 
 	(def c (SimpleCompass. 0)) 
 
@@ -54,7 +54,7 @@ I would have liked a bit more practice with records and protocols outside of the
 
 ## Macros
 
-Ugh.
+Ugh. This is definitely an area that will need further practice for me to become proficient with. Our unless macro looks like this, with quotes to escape keywords:
 
 	(defmacro unless [test body] (list 'if (list 'not test) body))
 
@@ -160,3 +160,40 @@ For this exercise we'll implement an Animal protocol, with make-noise and run-sp
 	))
 
 There's still some things I have to get my head around with namespaces and how they interact with leiningen, but that's just a matter of practice practice practice...
+
+For the dojo I decided to give people a stereotype to work from, and suggested a bank account record. My protocol looks like this:
+
+	(defprotocol Account
+	  (get-balance [this])
+	  (deposit [this amount]))
+
+Adding a 'withdraw' function to this is trivial, so creating an account, checking the balance and adding to the account is the minimum viable class. With that in mind our record looks like this:
+
+	(defrecord BankAccount [owner balance]
+	  Account
+	  (get-balance [this] (:balance this))
+
+Note how we use the symbol version of the record attribute as an accessor function.
+
+Now my first problem appeared, as I didn't want to have to specify a starting balance as part of creating the record, instead I wanted to supply an incomplete number of fields and have the record constructor fill in the default balance of &pound;0 - this proved to be more difficult than I imagined. 
+
+As far as I can tell (other than making a new defrecord with defmacro) the idiomatic way to do this is to create a factory function that spits out new BankAccount records, like so:
+
+	(defn new-bank-account [owner-name] (BankAccount. owner-name 0))
+    (def my-bank-account (new-bank-account "Sleepy Fox"))
+
+Despite a good trawl through the doco for defprotocol and defrecord I did not find a well documented way of overriding the record constructor in order to provide business logic around instantiating a new record instance, another example of the differences between the LISP and Java ways perhaps?
+
+A further problem occurs when we try and implement deposit, as the naive way fails: 
+
+	(deposit [this amount] 
+		(assign this.balance (+ (:balance this) amount))))
+
+This kind of thing can't work, as Clojure data structures are immutable. Instead we need to return a new version of the record with the updated values, which we can do with the _assoc_ function:
+
+	(deposit [this amount] 
+		(assoc this :balance (+ (:balance this) amount))))
+
+We need to be careful when we test this however, remembering that we're not mutating the existing record in-place.
+
+After more study of stackoverflow and Clojure documentation it seems that Bruce has led us on a bit of a wild goose chase, and that Clojure programmers only really use records in this way to do Java interop, and that normally they just use data structures (whether hashes, records with no embedded behaviour or something else) and functions that operate on those data structures. 
